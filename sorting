@@ -1,0 +1,43 @@
+import numpy as np
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, execute, Aer
+
+# Set the number of qubits and the target state
+n = 4
+target_state = np.array([1, 0, 0, 0])
+
+# Create a quantum circuit with n qubits and n classical registers
+q = QuantumRegister(n)
+c = ClassicalRegister(n)
+circuit = QuantumCircuit(q, c)
+
+# Apply the initial superposition and inversion about the mean gates
+circuit.h(q)
+circuit.x(q)
+circuit.h(q[0])
+circuit.h(q[1])
+circuit.h(q[2])
+circuit.h(q[3])
+circuit.x(q)
+circuit.h(q[0])
+circuit.h(q[1])
+circuit.h(q[2])
+circuit.h(q[3])
+
+# Apply the Grover iteration
+for i in range(n):
+    if target_state[i] == 1:
+        circuit.x(q[i])
+    circuit.h(q[i])
+    circuit.cx(q[i], q[n-1])
+    if target_state[i] == 1:
+        circuit.x(q[i])
+    circuit.h(q[i])
+
+# Measure the qubits
+for i in range(n):
+    circuit.measure(q[i], c[i])
+
+# Execute the circuit on a quantum simulator
+backend = Aer.get_backend('qasm_simulator')
+result = execute(circuit, backend, shots=1).result()
+print(result.get_counts(circuit))
